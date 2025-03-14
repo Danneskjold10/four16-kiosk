@@ -39,7 +39,10 @@
     
     function goToCheckout() {
         if (cartItems.length > 0) {
-            // Store cart in localStorage or a store for the checkout page
+            // Store cart in localStorage for the checkout page (browser-only)
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            }
             window.location.href = '/checkout';
         }
     }

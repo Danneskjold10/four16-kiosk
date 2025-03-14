@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { menuItems } from "$lib/items";
+import { goto } from "$app/navigation";
+    import { menuItems, promoSlides } from "$lib/items";
     import { page } from "$app/stores";
     import type { MenuItem, MenuCategory, CartItem } from "$lib/types";
     import type { MenuItemProps, DietaryFilterProps, EditableOrderItemProps, CustomizationModalProps, PromoSlide } from "$lib/dtype";
@@ -11,7 +11,7 @@
     const currentCategoryName = $page.params.category;
     
     // State variables
-    let diningOption = $state<string>(localStorage.getItem("diningOption") || "eat_in");
+    let diningOption = $state<string>("");
     let cartItems = $state<CartItem[]>([]);
     let isOrderSummaryOpen = $state(false);
     let showCustomizationModal = $state(false);
@@ -21,25 +21,12 @@
     let isArrowAnimating = $state(false);
     let slideInterval = $state<number | null>(null);
     
-    // Promotional slides
-    const promoSlides: PromoSlide[] = [
-        {
-            title: "Try Our New Burger",
-            description: "Delicious and juicy, with special sauce",
-            image: "/images/promo1.jpg"
-        },
-        {
-            title: "Family Deal",
-            description: "Great value for the whole family",
-            image: "/images/promo2.jpg"
-        },
-        {
-            title: "Healthy Options",
-            description: "Delicious and nutritious choices",
-            image: "/images/promo3.jpg"
+    // Initialize dining option from localStorage in client-side only
+    $effect.root(() => {
+        if (typeof window !== 'undefined') {
+            diningOption = localStorage.getItem("diningOption") || "eat_in";
         }
-    ];
-    
+    });
     // Computed properties for active category
     let activeMenuCategory = $state<MenuCategory | undefined>(undefined);
     let filteredMenuItems = $state<MenuItem[]>([]);
@@ -281,15 +268,13 @@
         isOrderSummaryOpen = false;
     }
     
-    function goToCheckout(): void {
+    function goToCheckout() {
         if (cartItems.length > 0) {
-            // Animate arrow
-            isArrowAnimating = true;
-            setTimeout(() => {
-                isArrowAnimating = false;
-                // Navigate to checkout using SvelteKit's goto
-                goto('/checkout');
-            }, 300);
+            // Store cart in localStorage for the checkout page (browser-only)
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            }
+            window.location.href = '/checkout';
         }
     }
 </script>
@@ -323,7 +308,6 @@
     </div>
   </div>
   
-
   <div class="container mx-auto px-4">
     <!-- Header area -->
     <div class="flex flex-col mb-4">

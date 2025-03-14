@@ -22,8 +22,8 @@
         if (data.item) {
             customizationStore.initializeWithItem(data.item);
             
-            // Check if we're at the base URL without a specific customization step
-            const currentPath = $page.url.pathname;
+      // Check if we're at the base URL without a specific customization step
+      const currentPath = $page.url.pathname;
             const needsRedirect = !currentPath.includes('/size') && 
                 !currentPath.includes('/toppings') && 
                 !currentPath.includes('/sauces') && 
@@ -38,7 +38,9 @@
                 if (isCustomizable) {
                     goto(`/menu/${category}/${item}/size`);
                 } else {
-                    // For non-customizable items, add directly to cart and return to menu
+                    // We should never get here now since non-customizable items
+                    // are directly added to cart from the menu page with the
+                    // "Add to Order" button. But just in case:
                     const event = new CustomEvent("addToCart", {
                         detail: { 
                             item: {

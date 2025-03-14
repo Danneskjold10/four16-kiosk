@@ -1,4 +1,26 @@
-export const menuItems: F16.MenuCategory[] = [
+import type { MenuCategory } from './types';
+import type { PromoSlide } from './dtype';
+
+export const promoSlides = [
+    {
+        title: "Try Our New Burger",
+        description: "Delicious and juicy, with special sauce",
+        image: "/images/promo1.jpg"
+    },
+    {
+        title: "Family Deal",
+        description: "Great value for the whole family",
+        image: "/images/promo2.jpg"
+    },
+    {
+        title: "Healthy Options",
+        description: "Delicious and nutritious choices",
+        image: "/images/promo3.jpg"
+    }
+];
+
+
+export const menuItems: MenuCategory[] = [
     {
         id: 1,
         category: "Burgers",
