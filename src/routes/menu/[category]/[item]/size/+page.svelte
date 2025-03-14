@@ -4,8 +4,8 @@
     import { customizationStore } from "$lib/customizationStore";
     
     // Size options
-    let sizes = ["Small", "Medium", "Large", "X-Large"];
-    let selectedSize = $state(1); // Default to Medium
+    let sizes = ["X-Small", "Small", "Medium", "Large", "X-Large"];
+    let selectedSize = $state(2); // Default to Medium
     
     // Carousel parameters
     const perspectiveFactor: number = 2;
@@ -20,7 +20,7 @@
     // Price adjustment constants - explicit typing
     const SIZE_UPGRADE_COST = 1.50;   // Cost per size upgrade
     const SIZE_DOWNGRADE_DISCOUNT = 0.75; // Discount per size downgrade
-    const DEFAULT_SIZE_INDEX = 1;     // Medium is the default size (index 1)
+    const DEFAULT_SIZE_INDEX = 2;     // Medium is the default size (index 2)
     
     // Derived values
     const carousel3dLen = $derived(sizes.length);
@@ -96,14 +96,14 @@
     }
 </script>
   
-<div class="w-full h-full relative flex flex-col justify-center items-center bg-pink-100 pt-6 pb-16">
+<div class="w-full h-full relative flex flex-col justify-center items-center bg-base-100 pt-6 pb-16">
     <!-- Size information -->
     <div class="text-center mb-6">
-        <h2 class="text-xl font-bold text-orange-800">Select Your Size</h2>
-        <p class="text-sm text-gray-700">
+        <h2 class="text-xl font-bold text-primary">Select Your Size</h2>
+        <p class="text-sm text-base-content">
             Size {sizes[selectedSize]}: 
-            <span class={selectedSize === DEFAULT_SIZE_INDEX ? "text-gray-600" : 
-                       (selectedSize > DEFAULT_SIZE_INDEX ? "text-orange-600 font-semibold" : "text-green-600 font-semibold")}>
+            <span class={selectedSize === DEFAULT_SIZE_INDEX ? "text-base-content" : 
+                       (selectedSize > DEFAULT_SIZE_INDEX ? "text-secondary font-semibold" : "text-accent font-semibold")}>
                 {selectedSize === DEFAULT_SIZE_INDEX ? "Standard Price" : getSizeAdjustmentText(selectedSize)}
             </span>
         </p>
@@ -124,14 +124,14 @@
                 <button 
                 onclick={() => handleSizeSelection(d)}
                 onkeydown={e => handleKeyDown(e, () => handleSizeSelection(d))}
-                class="btn {selectedSize === d ? 'bg-green-600 text-white' : 'bg-white/70 text-gray-700'} 
-                     w-full h-full absolute opacity-80 flex flex-col items-center justify-center gap-2 border border-gray-300 
+                class="btn {selectedSize === d ? 'bg-primary text-primary-content' : 'bg-base-200 text-base-content'} 
+                     w-full h-full absolute opacity-80 flex flex-col items-center justify-center gap-2 border border-base-300 
                      font-bold text-3xl rounded-lg shadow-md active:scale-95"
                 style="transform: rotateY({d * carouselStepDeg}deg) translateZ({(selectedSize === d ? translationFactor : 1) * item3dtranslation}px); 
                        scale: 0.85; min-height: 120px; touch-action: manipulation;"
               >
                 <span>{size}</span>
-                <span class="text-sm mt-1 px-4 py-2 rounded-full {d === DEFAULT_SIZE_INDEX ? 'bg-gray-100 text-gray-800' : (d < DEFAULT_SIZE_INDEX ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800')}">
+                <span class="text-sm mt-1 px-4 py-2 rounded-full {d === DEFAULT_SIZE_INDEX ? 'bg-base-200 text-base-content' : (d < DEFAULT_SIZE_INDEX ? 'bg-accent bg-opacity-20 text-accent-content' : 'bg-secondary bg-opacity-20 text-secondary-content')}">
                   {d === DEFAULT_SIZE_INDEX ? "Standard" : getSizeAdjustmentText(d)}
                 </span>
               </button>
@@ -145,7 +145,7 @@
         <!-- Carousel Navigation Controls -->
         <div class="w-full mb-4">
             <input 
-                class="range range-xs w-full" 
+                class="range range-xs range-primary w-full" 
                 type="range" 
                 min="0" 
                 max={carousel3dLen - 1} 
@@ -158,8 +158,8 @@
         <div class="flex justify-between w-full px-1 mb-8 text-sm">
             {#each sizes as size, d}
                 <div class="flex flex-col items-center">
-                    <span class={selectedSize === d ? 'font-bold text-amber-800' : 'text-gray-600'}>{size}</span>
-                    <span class="text-xs mt-1 {d === DEFAULT_SIZE_INDEX ? '' : d < DEFAULT_SIZE_INDEX ? 'text-green-600' : 'text-orange-600'}">
+                    <span class={selectedSize === d ? 'font-bold text-primary' : 'text-base-content'}>{size}</span>
+                    <span class="text-xs mt-1 {d === DEFAULT_SIZE_INDEX ? '' : d < DEFAULT_SIZE_INDEX ? 'text-accent' : 'text-secondary'}">
                         {d === DEFAULT_SIZE_INDEX ? "" : getSizeAdjustmentText(d)}
                     </span>
                 </div>
@@ -169,7 +169,7 @@
         <!-- Forward Button (Centered) -->
         <div class="flex justify-center w-full">
             <button 
-                class="bg-amber-500 hover:bg-amber-600 text-white py-3 px-8 rounded-full flex items-center transition-colors"
+                class="btn btn-primary py-3 px-8 rounded-full flex items-center"
                 onclick={moveForward}
                 onkeydown={e => handleKeyDown(e, moveForward)}
             >
@@ -194,28 +194,5 @@
     
     .chngng {
         transition: transform 0.5s ease;
-    }
-    
-
-    
-    input[type=range].range::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        height: 16px;
-        width: 16px;
-        border-radius: 50%;
-        background: #f59e0b;
-        cursor: pointer;
-        box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-    }
-    
-    input[type=range].range::-moz-range-thumb {
-        height: 16px;
-        width: 16px;
-        border-radius: 50%;
-        background: #f59e0b;
-        cursor: pointer;
-        border: none;
-        box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
     }
 </style>

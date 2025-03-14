@@ -2,126 +2,9 @@
     import { goto } from "$app/navigation";
     import { menuItems } from "$lib/items";
     import { page } from "$app/stores";
-    import type { MenuItem, MenuCategory, CartItem, Customization } from "$lib/types";
-
-    // Define types for our components
-    interface MenuItemProps {
-        item: MenuItem;
-    }
+    import type { MenuItem, MenuCategory, CartItem } from "$lib/types";
+    import type { MenuItemProps, DietaryFilterProps, EditableOrderItemProps, CustomizationModalProps, PromoSlide } from "$lib/dtype";
     
-    interface DietaryFilterProps {
-        onFilterChange: (filters: Record<string, boolean>) => void;
-    }
-    
-    interface EditableOrderItemProps {
-        item: CartItem;
-        index: number;
-        onIncrease: string;
-        onDecrease: string;
-        onEdit: string;
-    }
-    
-    interface CustomizationModalProps {
-        item: CartItem;
-        isOpen: boolean;
-        onClose: string;
-        onAddToCart: string;
-    }
-    
-    interface PromoSlide {
-        title: string;
-        description: string;
-        image: string;
-    }
-    
-    
-// Menu Category Component (to be moved to a separate file later)
-const MenuItemComponent = ({ item }: MenuItemProps): string => {
-    if (!activeMenuCategory) return '';
-    const categoryName = activeMenuCategory.category;
-    const isCustomizable = ["Burgers", "Chicken", "Combos"].includes(categoryName);
-    
-    return `
-        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-            <div class="relative h-48 bg-gray-100">
-                <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
-            </div>
-            <div class="p-4">
-                <h3 class="text-lg font-bold mb-1">${item.name}</h3>
-                <p class="text-gray-600 text-sm mb-3">${item.description}</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-bold">$${item.price.toFixed(2)}</span>
-                    <a href="/menu/${categoryName}/${encodeURIComponent(item.name)}" class="btn ${isCustomizable ? 'btn-primary' : 'btn-success'} btn-sm">
-                        ${isCustomizable ? 'Customize' : 'Add to Order'}
-                    </a>
-                </div>
-            </div>
-        </div>
-    `;
-};
-    
-    // Dietary Filter Component (to be moved to a separate file later)
-    const DietaryFilter = ({ onFilterChange }: DietaryFilterProps): string => {
-        return `
-            <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-                <h3 class="font-bold mb-2">Dietary Preferences</h3>
-                <div class="flex flex-wrap gap-2">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" class="checkbox" value="vegetarian" />
-                        <span>Vegetarian</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" class="checkbox" value="vegan" />
-                        <span>Vegan</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" class="checkbox" value="gluten-free" />
-                        <span>Gluten-Free</span>
-                    </label>
-                </div>
-            </div>
-        `;
-    };
-    
-    // Editable Order Item Component (to be moved to a separate file later)
-    const EditableOrderItem = ({ item, index, onIncrease, onDecrease, onEdit }: EditableOrderItemProps): string => {
-        return `
-            <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                <div class="flex items-center">
-                    <div class="mr-3 flex items-center">
-                        <button class="btn btn-xs btn-circle" onclick="${onDecrease}(${index})">-</button>
-                        <span class="mx-2 font-medium">${item.quantity}</span>
-                        <button class="btn btn-xs btn-circle" onclick="${onIncrease}(${index})">+</button>
-                    </div>
-                    <div>
-                        <p class="font-medium">${item.name}</p>
-                        <p class="text-sm text-gray-500">$${item.price.toFixed(2)}</p>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <span class="font-medium mr-3">$${(item.price * item.quantity).toFixed(2)}</span>
-                    <button class="btn btn-xs btn-ghost" onclick="${onEdit}(${item}, ${index})">Edit</button>
-                </div>
-            </div>
-        `;
-    };
-    
-    // Customization Modal Component (to be moved to a separate file later)
-    const CustomizationModal = ({ item, isOpen, onClose, onAddToCart }: CustomizationModalProps): string => {
-        return `
-            <div class="modal ${isOpen ? 'modal-open' : ''}">
-                <div class="modal-box">
-                    <h3 class="font-bold text-lg">Customize ${item.name}</h3>
-                    <p class="py-4">Customization options would go here</p>
-                    <div class="modal-action">
-                        <button class="btn" onclick="${onClose}">Cancel</button>
-                        <button class="btn btn-primary" onclick="${onAddToCart}(${item})">Save</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    };
-
     let { data } = $props();
     
     // Access the current category from URL params
@@ -164,6 +47,93 @@ const MenuItemComponent = ({ item }: MenuItemProps): string => {
     // Helper function to find category by name - standalone to avoid recursion
     function findCategoryByName(name: string): MenuCategory | undefined {
         return menuItems.find(c => c.category === name);
+    }
+    
+    // Menu Category Component (to be moved to a separate file later)
+    function MenuItemComponent({ item }: MenuItemProps): string {
+        if (!activeMenuCategory) return '';
+        const categoryName = activeMenuCategory.category;
+        const isCustomizable = ["Burgers", "Chicken", "Combos"].includes(categoryName);
+        
+        return `
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="relative h-48 bg-gray-100">
+                    <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-bold mb-1">${item.name}</h3>
+                    <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold">$${item.price.toFixed(2)}</span>
+                        <a href="/menu/${categoryName}/${encodeURIComponent(item.name)}" class="btn ${isCustomizable ? 'btn-primary' : 'btn-success'} btn-sm">
+                            ${isCustomizable ? 'Customize' : 'Add to Order'}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Dietary Filter Component (to be moved to a separate file later)
+    function DietaryFilter({ onFilterChange }: DietaryFilterProps): string {
+        return `
+            <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+                <h3 class="font-bold mb-2">Dietary Preferences</h3>
+                <div class="flex flex-wrap gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="checkbox" value="vegetarian" />
+                        <span>Vegetarian</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="checkbox" value="vegan" />
+                        <span>Vegan</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="checkbox" value="gluten-free" />
+                        <span>Gluten-Free</span>
+                    </label>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Editable Order Item Component (to be moved to a separate file later)
+    function EditableOrderItem({ item, index, onIncrease, onDecrease, onEdit }: EditableOrderItemProps): string {
+        return `
+            <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                <div class="flex items-center">
+                    <div class="mr-3 flex items-center">
+                        <button class="btn btn-xs btn-circle" onclick="${onDecrease}(${index})">-</button>
+                        <span class="mx-2 font-medium">${item.quantity}</span>
+                        <button class="btn btn-xs btn-circle" onclick="${onIncrease}(${index})">+</button>
+                    </div>
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-sm text-gray-500">$${item.price.toFixed(2)}</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="font-medium mr-3">$${(item.price * item.quantity).toFixed(2)}</span>
+                    <button class="btn btn-xs btn-ghost" onclick="${onEdit}(${item}, ${index})">Edit</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Customization Modal Component (to be moved to a separate file later)
+    function CustomizationModal({ item, isOpen, onClose, onAddToCart }: CustomizationModalProps): string {
+        return `
+            <div class="modal ${isOpen ? 'modal-open' : ''}">
+                <div class="modal-box">
+                    <h3 class="font-bold text-lg">Customize ${item.name}</h3>
+                    <p class="py-4">Customization options would go here</p>
+                    <div class="modal-action">
+                        <button class="btn" onclick="${onClose}">Cancel</button>
+                        <button class="btn btn-primary" onclick="${onAddToCart}(${item})">Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     // Set initial active menu category without using $effect
@@ -353,6 +323,7 @@ const MenuItemComponent = ({ item }: MenuItemProps): string => {
     </div>
   </div>
   
+
   <div class="container mx-auto px-4">
     <!-- Header area -->
     <div class="flex flex-col mb-4">

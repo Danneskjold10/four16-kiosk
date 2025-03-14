@@ -36,6 +36,9 @@
     // Helper functions for toggling items
     function toggleExtra(id: number) {
         customizationStore.toggleExtra(id);
+        
+        // Update the dynamic price display
+        updateDynamicPrice();
     }
     
     // Select all or none
@@ -43,12 +46,32 @@
         unselectedItems.forEach(item => {
             customizationStore.toggleExtra(item.id);
         });
+        updateDynamicPrice();
     }
     
     function selectNone() {
         selectedItems.forEach(item => {
             customizationStore.toggleExtra(item.id);
         });
+        updateDynamicPrice();
+    }
+    
+    // Update the dynamic price display
+    function updateDynamicPrice() {
+        setTimeout(() => {
+            const priceElement = document.getElementById("dynamic-total-price");
+            if (priceElement) {
+                // Get the latest price from the store
+                let currentPrice = 0;
+                const unsubscribe = customizationStore.subscribe(state => {
+                    currentPrice = state.totalPrice;
+                });
+                unsubscribe();
+                
+                // Update the display
+                priceElement.textContent = `$${currentPrice.toFixed(2)}`;
+            }
+        }, 0);
     }
     
     // Handle broken images

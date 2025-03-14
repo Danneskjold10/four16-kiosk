@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from "$app/stores";
+    import { goto } from "$app/navigation";
     import { customizationStore } from "$lib/customizationStore";
     import { menuItems } from "$lib/items";
     import type { MenuItem } from "$lib/types";
@@ -19,6 +20,11 @@
     let currentStepIndex = $state(-1);
     let currentItem = $state<MenuItem | null>(null);
     let isLoading = $state(true);
+    
+    // Add state for price tracking
+    let basePrice = $state(0);
+    let totalPrice = $state(0);
+    let extraCosts = $derived(totalPrice - basePrice);
     
     // Initialize from URL parameters
     $effect(() => {
@@ -79,6 +85,18 @@
         }
     });
     
+    // Update prices when store changes
+    $effect(() => {
+        const unsubscribe = customizationStore.subscribe(state => {
+            if (state.item) {
+                basePrice = state.item.price;
+                totalPrice = state.totalPrice;
+            }
+        });
+        
+        return unsubscribe;
+    });
+    
     // Function to determine current step from URL
     function getStepFromUrl(url: string): string {
         if (url.includes("/size")) return "size";
@@ -98,6 +116,12 @@
         const targetStep = steps[index].id;
         
         window.location.href = `/menu/${category}/${item}/${targetStep}`;
+    }
+    
+    // Back to menu button handler
+    function backToMenu() {
+        const category = $page.params.category;
+        goto(`/menu/${category}`);
     }
     
     // Handle keyboard navigation
@@ -139,17 +163,61 @@
                     <h1 class="text-2xl font-bold text-white">{currentItem.name}</h1>
                     <p class="text-sm text-white/80">Customize your order</p>
                 </div>
+                <!-- Back to menu button -->
+                <button 
+                    class="absolute top-4 left-4 btn btn-circle btn-sm bg-base-100/80 hover:bg-base-100"
+                    onclick={backToMenu}
+                    aria-label="Back to menu"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             {:else}
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 w-full p-4">
                     <h1 class="text-2xl font-bold text-white">{decodeURIComponent($page.params.item)}</h1>
                     <p class="text-sm text-white/80">Customize your order</p>
                 </div>
+                <!-- Back to menu button -->
+                <button 
+                    class="absolute top-4 left-4 btn btn-circle btn-sm bg-base-100/80 hover:bg-base-100"
+                    onclick={backToMenu}
+                    aria-label="Back to menu"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             {/if}
         </div>
         
         <!-- Progress Steps Bar -->
         <div class="bg-orange-50 px-4 py-6 relative">
+            <!-- Product image and price on left side with additional cost display -->
+            {#if currentItem}
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center z-10">
+                    <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-base-300 bg-white">
+                        <img 
+                            src={currentItem.image} 
+                            alt={currentItem.name}
+                            class="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div class="ml-2">
+                        <div class="bg-base-100 px-3 py-1 rounded-lg shadow-sm flex flex-col">
+                            <div class="flex items-center">
+                                <span class="font-bold text-primary">${basePrice.toFixed(2)}</span>
+                                {#if extraCosts > 0}
+                                    <span class="ml-2 text-xs text-secondary">+${extraCosts.toFixed(2)}</span>
+                                {/if}
+                            </div>
+                            <span class="text-xs text-base-content">Total: <span class="font-medium">${totalPrice.toFixed(2)}</span></span>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+            
             <!-- Steps container with positioning -->
             <div class="flex justify-center items-center">
                 <!-- Step boxes with connector lines -->
@@ -179,7 +247,7 @@
                     <div class="w-16 h-0 border-t-2 border-dashed mx-1 {currentStepIndex > 0 ? 'border-orange-500' : 'border-orange-300'}"></div>
                     
                     <!-- Connecting steps -->
-                    {#each steps.slice(1) as step, i}
+                    {#each steps.slice(1) as step, i (step.id)}
                         <div class="flex items-center">
                             <button 
                                 class="flex flex-col items-center focus:outline-none z-10"
@@ -241,6 +309,14 @@
                     Force Continue
                 </button>
             </div>
+            
+            <!-- Back to menu button (even in loading state) -->
+            <button 
+                class="mt-6 btn btn-sm btn-outline"
+                onclick={backToMenu}
+            >
+                Back to Menu
+            </button>
         </div>
     </div>
 {/if}
