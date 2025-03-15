@@ -1,6 +1,12 @@
 // Type definitions for the application
 import type { MenuItem, CartItem } from './types';
 
+
+
+
+interface Window {
+    addToCartDirectly: (item: MenuItem) => void;
+}
 // Export all interfaces in a namespace
 export namespace F16 {
     // Component Props Interfaces

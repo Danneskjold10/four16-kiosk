@@ -14,7 +14,7 @@
             cartItems = [...cartItems, item];
             
             // Optionally show a toast or notification
-            // ...
+            console.log('Item added to cart:', item.name);
         };
         
         document.addEventListener('addToCart', handleAddToCart as EventListener);
@@ -32,7 +32,7 @@
     function getTotal(items: CartItem[]): string {
         return items.reduce((sum: number, item: CartItem) => {
             // Use totalPrice if available (for customized items), otherwise use the base price
-            const itemPrice = item.totalPrice || item.price;
+            const itemPrice = item.totalPrice !== undefined ? item.totalPrice : item.price;
             return sum + (itemPrice * (item.quantity || 1));
         }, 0).toFixed(2);
     }

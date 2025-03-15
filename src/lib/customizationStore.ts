@@ -86,6 +86,26 @@ const initialState: CustomizationState = {
   totalPrice: 0
 };
 
+// Get the customized item for cart
+getCustomizedItem: () => {
+  let result: any = null;
+  
+  // Get the current state (synchronously)
+  const unsubscribe = customizationStore.subscribe(state => {
+    // Use type assertion to avoid TypeScript errors
+    const typedState = state as unknown as CustomizationState;
+    result = typedState;
+  });
+  unsubscribe();
+  
+  if (!result || !result.item) return null;
+  
+  // Create customizations array for cart item
+  const customizations: Customization[] = [];
+  
+  // ... rest of the function remains the same
+}
+
 // Helper function to calculate the total price
 function calculateTotalPrice(basePrice: number, state: CustomizationState): number {
   let total = basePrice;
@@ -242,19 +262,23 @@ const createStore = () => {
     // Reset the store
     reset: () => set(initialState),
     
-    // Get the complete customized item for cart
     getCustomizedItem: () => {
+      console.log("getCustomizedItem called");
       let result: any = null;
       
       // Get the current state (synchronously)
-      const unsubscribe = subscribe(state => {
-        // Use type assertion to avoid TypeScript errors
-        const typedState = state as unknown as CustomizationState;
-        result = typedState;
+      const unsubscribe = customizationStore.subscribe(state => {
+          console.log("Current customization state:", state);
+          // Use type assertion to avoid TypeScript errors
+          const typedState = state as unknown as CustomizationState;
+          result = typedState;
       });
       unsubscribe();
       
-      if (!result || !result.item) return null;
+      if (!result || !result.item) {
+          console.error("No item in customization state");
+          return null;
+      }
       
       // Create customizations array for cart item
       const customizations: Customization[] = [];
@@ -262,14 +286,13 @@ const createStore = () => {
       // Add size
       const selectedSize = result.size.options.find((s: SizeOption) => s.selected);
       if (selectedSize) {
-        customizations.push({
-          id: selectedSize.id,
-          name: `Size: ${selectedSize.name}`,
-          selected: true,
-          price: selectedSize.price
-        });
+          customizations.push({
+              id: selectedSize.id,
+              name: `Size: ${selectedSize.name}`,
+              selected: true,
+              price: selectedSize.price
+          });
       }
-      
       // Add toppings
       result.toppings
         .filter((t: ToppingOption) => t.selected)

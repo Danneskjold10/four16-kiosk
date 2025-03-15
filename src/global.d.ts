@@ -1,4 +1,8 @@
 // Global type definitions for your application
+import type { MenuItem, CartItem } from '$lib/types';
+
 interface Window {
-    addToCart: (item: F16.MenuItem) => void;
+    addToCartDirectly: (item: MenuItem) => void;
+    showItemAddedToast: (itemName: string) => void;
+    addItemToCart: (item: CartItem) => boolean;
 }

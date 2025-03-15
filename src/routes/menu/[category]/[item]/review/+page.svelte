@@ -9,13 +9,13 @@
     
     // Load data from the store
     $effect(() => {
-        const unsubscribe = customizationStore.subscribe(state => {
-            customizationData = { ...state };
-            quantity = state.quantity;
-        });
-        
-        return unsubscribe;
+    const unsubscribe = customizationStore.subscribe(state => {
+        customizationData = { ...state };
+        quantity = state.quantity;
     });
+    
+    return unsubscribe;
+});
     
     // Update quantity
     function updateQuantity(newQuantity: number) {
@@ -59,156 +59,110 @@
     }
 </script>
 
-<div class="w-full h-full flex flex-col bg-base-100 pt-6 pb-16">
+<div class="w-full h-full flex flex-col bg-gray-50 pt-6 pb-16">
     <!-- Header -->
     <div class="text-center mb-6 px-4">
-        <h2 class="text-2xl font-bold text-primary">Review Your Order</h2>
-        <p class="text-sm text-base-content/70 mt-1">Confirm your customizations</p>
+        <h2 class="text-2xl font-bold text-orange-800">Review Your Order</h2>
+        <p class="text-sm text-gray-700 mt-1">Confirm your customizations</p>
     </div>
     
     {#if customizationData && customizationData.item}
         <div class="flex-1 overflow-y-auto px-4">
             <!-- Item Overview -->
-            <div class="card bg-base-200 shadow-md mb-4">
-                <div class="card-body p-4 flex flex-row">
-                    <div class="w-24 h-24 bg-base-300 rounded-lg overflow-hidden mr-4 flex-shrink-0">
-                        <img 
-                            src={customizationData.item.image} 
-                            alt={customizationData.item.name}
-                            class="w-full h-full object-cover"
-                        />
+            <div class="bg-white rounded-xl p-4 shadow-md mb-4 flex">
+                <div class="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden mr-4 flex-shrink-0">
+                    <img 
+                        src={customizationData.item.image} 
+                        alt={customizationData.item.name}
+                        class="w-full h-full object-cover"
+                    />
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold">{customizationData.item.name}</h3>
+                    <p class="text-sm text-gray-600">{customizationData.item.description}</p>
+                    
+                    <!-- Quantity Selector -->
+                    <div class="flex items-center mt-3">
+                        <span class="text-sm font-medium mr-2">Quantity:</span>
+                        <button 
+                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                            onclick={() => updateQuantity(quantity - 1)}
+                            disabled={quantity <= 1}
+                        >
+                            <span class="text-lg font-bold">-</span>
+                        </button>
+                        <span class="mx-3 font-bold">{quantity}</span>
+                        <button 
+                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
+                            onclick={() => updateQuantity(quantity + 1)}
+                        >
+                            <span class="text-lg font-bold">+</span>
+                        </button>
                     </div>
-                    <div class="flex-1">
-                        <h3 class="card-title text-lg">{customizationData.item.name}</h3>
-                        <p class="text-sm text-base-content/70">{customizationData.item.description}</p>
-                        
-                        <!-- Quantity Selector -->
-                        <div class="flex items-center mt-3">
-                            <span class="text-sm font-medium mr-2">Quantity:</span>
-                            <button 
-                                class="btn btn-circle btn-sm btn-ghost"
-                                onclick={() => updateQuantity(quantity - 1)}
-                                disabled={quantity <= 1}
-                            >
-                                <span class="text-lg font-bold">-</span>
-                            </button>
-                            <span class="mx-3 font-bold">{quantity}</span>
-                            <button 
-                                class="btn btn-circle btn-sm btn-ghost"
-                                onclick={() => updateQuantity(quantity + 1)}
-                            >
-                                <span class="text-lg font-bold">+</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0 text-right">
-                        <div class="text-lg font-bold text-primary">${customizationData.totalPrice.toFixed(2)}</div>
-                        <div class="text-xs text-base-content/60">
-                            Base: ${customizationData.item.price.toFixed(2)}
-                        </div>
+                </div>
+                <div class="flex-shrink-0 text-right">
+                    <div class="text-lg font-bold">${customizationData.totalPrice.toFixed(2)}</div>
+                    <div class="text-xs text-gray-500">
+                        Base: ${customizationData.item.price.toFixed(2)}
                     </div>
                 </div>
             </div>
             
             <!-- Customizations Summary -->
-            <div class="card bg-base-200 shadow-md mb-4">
-                <div class="card-body">
-                    <h3 class="card-title text-lg mb-2">Your Customizations</h3>
-                    
-                    <!-- Size -->
-                    <div class="mb-3">
-                        <h4 class="font-medium text-sm text-base-content/60">Size</h4>
-                        <p class="ml-2">
-                            {customizationData.size.options.find(s => s.selected)?.name || "Medium"}
-                            {#if (customizationData.size.options.find(s => s.selected)?.price || 0) > 0}
-                                <span class="badge badge-secondary badge-sm ml-1">
-                                    +${(customizationData.size.options.find(s => s.selected)?.price || 0).toFixed(2)}
-                                </span>
-                            {/if}
-                            {#if (customizationData.size.options.find(s => s.selected)?.price || 0) < 0}
-                                <span class="badge badge-accent badge-sm ml-1">
-                                    ${(customizationData.size.options.find(s => s.selected)?.price || 0).toFixed(2)}
-                                </span>
-                            {/if}
-                        </p>
-                    </div>
-                    
-                    <!-- Toppings -->
-                    <div class="mb-3">
-                        <h4 class="font-medium text-sm text-base-content/60">Toppings</h4>
-                        <div class="ml-2">
-                            {#if customizationData.toppings.some(t => t.selected)}
-                                <div class="flex flex-wrap gap-1 mt-1">
-                                    {#each customizationData.toppings.filter(t => t.selected) as topping}
-                                        <span class="badge badge-outline">
-                                            {topping.name}
-                                            {#if topping.price > 0}
-                                                <span class="ml-1 text-secondary">+${topping.price.toFixed(2)}</span>
-                                            {/if}
-                                        </span>
-                                    {/each}
-                                </div>
-                            {:else}
-                                <p class="text-base-content/50 italic">None selected</p>
-                            {/if}
-                        </div>
-                    </div>
-                    
-                    <!-- Sauces -->
-                    <div class="mb-3">
-                        <h4 class="font-medium text-sm text-base-content/60">Sauces</h4>
-                        <div class="ml-2">
-                            {#if customizationData.sauces.some(s => s.selected)}
-                                <div class="flex flex-wrap gap-1 mt-1">
-                                    {#each customizationData.sauces.filter(s => s.selected) as sauce}
-                                        <span class="badge badge-outline">
-                                            {sauce.name} 
-                                            <span class="opacity-70">
-                                                ({sauce.intensity === 0 ? 'Light' : sauce.intensity === 1 ? 'Regular' : 'Extra'})
-                                            </span>
-                                            {#if sauce.price > 0}
-                                                <span class="ml-1 text-secondary">+${sauce.price.toFixed(2)}</span>
-                                            {/if}
-                                        </span>
-                                    {/each}
-                                </div>
-                            {:else}
-                                <p class="text-base-content/50 italic">None selected</p>
-                            {/if}
-                        </div>
-                    </div>
-                    
-                    <!-- Extras -->
-                    <div class="mb-3">
-                        <h4 class="font-medium text-sm text-base-content/60">Premium Extras</h4>
-                        <div class="ml-2">
-                            {#if customizationData.extras.some(e => e.selected)}
-                                <div class="flex flex-wrap gap-1 mt-1">
-                                    {#each customizationData.extras.filter(e => e.selected) as extra}
-                                        <span class="badge badge-secondary">
-                                            {extra.name}
-                                            {#if extra.price > 0}
-                                                <span class="ml-1">+${extra.price.toFixed(2)}</span>
-                                            {/if}
-                                        </span>
-                                    {/each}
-                                </div>
-                            {:else}
-                                <p class="text-base-content/50 italic">None selected</p>
-                            {/if}
-                        </div>
-                    </div>
-                    
-                    <!-- Special Instructions -->
-                    {#if customizationData.specialInstructions}
-                        <div class="mb-3">
-                            <h4 class="font-medium text-sm text-base-content/60">Special Instructions</h4>
-                            <div class="ml-2 mt-1 p-3 bg-base-300 rounded-lg text-sm italic">
-                                "{customizationData.specialInstructions}"
-                            </div>
-                        </div>
-                    {/if}
+            <div class="bg-white rounded-xl p-4 shadow-md mb-4">
+                <h3 class="font-bold text-lg mb-2">Your Customizations</h3>
+                
+                <!-- Size -->
+                <div class="mb-3">
+                    <h4 class="font-medium text-sm text-gray-500">Size</h4>
+                    <p class="ml-2">
+                        {customizationData.size.options.find(s => s.selected)?.name || "Medium"}
+                        {#if (customizationData.size.options.find(s => s.selected)?.price || 0) > 0}
+                            <span class="text-orange-600 text-sm ml-1">
+                                (+${(customizationData.size.options.find(s => s.selected)?.price || 0).toFixed(2)})
+                            </span>
+                        {/if}
+                    </p>
                 </div>
+                
+                <!-- Toppings -->
+                <div class="mb-3">
+                    <h4 class="font-medium text-sm text-gray-500">Toppings</h4>
+                    <p class="ml-2">
+                        {getSelectedOptions(customizationData.toppings) || "None"}
+                    </p>
+                </div>
+                
+                <!-- Sauces -->
+                <div class="mb-3">
+                    <h4 class="font-medium text-sm text-gray-500">Sauces</h4>
+                    <p class="ml-2">
+                        {customizationData.sauces
+                            .filter(s => s.selected)
+                            .map(s => {
+                                const intensity = s.intensity === 0 ? 'Light' : 
+                                                 s.intensity === 1 ? 'Regular' : 'Extra';
+                                return `${s.name} (${intensity})`;
+                            })
+                            .join(", ") || "None"}
+                    </p>
+                </div>
+                
+                <!-- Extras -->
+                <div class="mb-3">
+                    <h4 class="font-medium text-sm text-gray-500">Premium Extras</h4>
+                    <p class="ml-2">
+                        {getSelectedOptions(customizationData.extras) || "None"}
+                    </p>
+                </div>
+                
+                <!-- Special Instructions -->
+                {#if customizationData.specialInstructions}
+                    <div class="mb-3">
+                        <h4 class="font-medium text-sm text-gray-500">Special Instructions</h4>
+                        <p class="ml-2 text-sm italic">"{customizationData.specialInstructions}"</p>
+                    </div>
+                {/if}
             </div>
         </div>
         
@@ -217,7 +171,7 @@
             <div class="flex justify-between w-full">
                 <!-- Back Button -->
                 <button 
-                    class="btn btn-outline"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-6 rounded-full flex items-center transition-colors"
                     onclick={moveBack}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -228,7 +182,7 @@
                 
                 <!-- Add to Cart Button -->
                 <button 
-                    class="btn btn-success text-success-content"
+                    class="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-full flex items-center transition-colors"
                     onclick={addToCart}
                 >
                     <span class="font-medium">Add to Cart</span>
@@ -241,8 +195,8 @@
     {:else}
         <div class="flex-1 flex items-center justify-center">
             <div class="text-center">
-                <span class="loading loading-spinner loading-lg text-primary"></span>
-                <p class="text-lg mt-4">Loading item details...</p>
+                <div class="text-5xl mb-4">🔍</div>
+                <p class="text-lg">Loading item details...</p>
             </div>
         </div>
     {/if}

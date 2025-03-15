@@ -1,9 +1,10 @@
 <script lang="ts">
-import { goto } from "$app/navigation";
+    import { goto } from "$app/navigation";
     import { menuItems, promoSlides } from "$lib/items";
     import { page } from "$app/stores";
     import type { MenuItem, MenuCategory, CartItem } from "$lib/types";
     import type { MenuItemProps, DietaryFilterProps, EditableOrderItemProps, CustomizationModalProps, PromoSlide } from "$lib/dtype";
+    import ToastNotification from "$lib/ToastNotification.svelte";
     
     let { data } = $props();
     
@@ -20,13 +21,42 @@ import { goto } from "$app/navigation";
     let currentSlide = $state(0);
     let isArrowAnimating = $state(false);
     let slideInterval = $state<number | null>(null);
+    let toastVisible = $state(false);
+    let toastMessage = $state("");
     
     // Initialize dining option from localStorage in client-side only
     $effect.root(() => {
         if (typeof window !== 'undefined') {
             diningOption = localStorage.getItem("diningOption") || "eat_in";
+            
+            // Add the direct add to cart function to the window object
+            window.addToCartDirectly = (item: MenuItem) => {
+                // Create a cart item
+                const cartItem: CartItem = {
+                    ...item,
+                    quantity: 1,
+                    totalPrice: item.price,
+                    timestamp: Date.now()
+                };
+                
+                // Create and dispatch an addToCart event
+                const event = new CustomEvent("addToCart", {
+                    detail: { item: cartItem }
+                });
+                document.dispatchEvent(event);
+                
+                // Show toast notification
+                toastMessage = `${item.name} added to order`;
+                toastVisible = true;
+                
+                // Hide toast after 3 seconds
+                setTimeout(() => {
+                    toastVisible = false;
+                }, 3000);
+            };
         }
     });
+    
     // Computed properties for active category
     let activeMenuCategory = $state<MenuCategory | undefined>(undefined);
     let filteredMenuItems = $state<MenuItem[]>([]);
@@ -52,9 +82,16 @@ import { goto } from "$app/navigation";
                     <p class="text-gray-600 text-sm mb-3">${item.description}</p>
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-bold">$${item.price.toFixed(2)}</span>
-                        <a href="/menu/${categoryName}/${encodeURIComponent(item.name)}" class="btn ${isCustomizable ? 'btn-primary' : 'btn-success'} btn-sm">
-                            ${isCustomizable ? 'Customize' : 'Add to Order'}
-                        </a>
+                        ${isCustomizable ? 
+                            `<a href="/menu/${categoryName}/${encodeURIComponent(item.name)}" class="btn btn-primary btn-sm">
+                                Customize
+                            </a>` : 
+                            `<button 
+                                onclick="window.addToCartDirectly(${JSON.stringify(item).replace(/"/g, '&quot;')})" 
+                                class="btn btn-success btn-sm">
+                                Add to Order
+                            </button>`
+                        }
                     </div>
                 </div>
             </div>
@@ -187,7 +224,9 @@ import { goto } from "$app/navigation";
     }
     
     function getTotal(items: CartItem[]): string {
-        return items.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0).toFixed(2);
+        return items.reduce((sum: number, item: CartItem) => {
+            return sum + (item.totalPrice || item.price) * item.quantity;
+        }, 0).toFixed(2);
     }
     
     function getItemCount(items: CartItem[]): number {
@@ -429,102 +468,110 @@ import { goto } from "$app/navigation";
             <!-- Order Items - using EditableOrderItem component with direct handler functions -->
             <div class="mb-6 max-h-64 overflow-y-auto">
                 {#each cartItems as item, i (i)}
-                    {@html EditableOrderItem({ 
-                        item,
-                        index: i,
-                        onIncrease: 'handleIncreaseQuantity',
-                        onDecrease: 'handleDecreaseQuantity',
-                        onEdit: 'handleEdit'
-                    })}
-                {/each}
-            </div>
-            
-            <!-- Checkout Actions -->
-            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                <button 
-                    class="px-6 py-3 bg-orange-100 text-orange-500 rounded-full font-medium" 
-                    onclick={restartOrder}
-                >
-                    Restart Menu
-                </button>
-                
-                <div class="flex items-center">
-                    <span class="mr-2 font-bold">Total:</span>
-                    <span class="text-xl font-bold" id="summary-total">$ {getTotal(cartItems)}</span>
-                </div>
-            </div>
+                {@html EditableOrderItem({ 
+                    item,
+                    index: i,
+                    onIncrease: 'handleIncreaseQuantity',
+                    onDecrease: 'handleDecreaseQuantity',
+                    onEdit: 'handleEdit'
+                })}
+            {/each}
         </div>
-    {/if}
-    
-    <!-- Fixed Payment Bar at Bottom -->
-    <div class="bg-base-300 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.2)] p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex-1">
-                <div class="flex items-center">
-                    <span class="mr-2 font-bold">Items:</span>
-                    <span class="badge badge-primary badge-lg" id="cart-item-count">{getItemCount(cartItems)}</span>
-                    <span class="mx-4 font-bold">Total:</span>
-                    <span class="text-xl font-bold" id="cart-total-price">$ {getTotal(cartItems)}</span>
-                </div>
-            </div>
-            
-            <!-- Center Arrow Button -->
-            <div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
-                <button 
-                    class="bg-white rounded-full p-3 shadow-md z-30"
-                    onclick={toggleOrderSummary}
-                    aria-label="Toggle order summary"
-                >
-                    <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        class="h-6 w-6 transform transition-transform {isOrderSummaryOpen ? 'rotate-180' : ''}" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                    >
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-            
+        
+        <!-- Checkout Actions -->
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
             <button 
-                class="relative overflow-hidden group px-8 py-4 h-auto min-h-16 border-4 border-green-800 rounded-full {cartItems.length === 0 ? 'opacity-70 cursor-not-allowed' : 'bg-green-800 text-white hover:bg-green-600'}" 
-                onclick={goToCheckout}
-                disabled={cartItems.length === 0}
+                class="px-6 py-3 bg-orange-100 text-orange-500 rounded-full font-medium" 
+                onclick={restartOrder}
             >
-                <!-- Animated border glow effect -->
-                <span class="absolute inset-0 border-4 border-white/20 rounded-full opacity-0 group-hover:opacity-100 scale-105 transition-all duration-300"></span>
-                
-                <!-- Hover shine effect -->
-                <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
-                
-                <!-- Button content with increased spacing -->
-                <div class="relative z-10 flex items-center justify-center font-bold tracking-wide text-lg">
-                    <span>Proceed to Checkout</span>
-                    <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        class="h-6 w-6 ml-3 transition-transform duration-1000 ease-in-out {isArrowAnimating ? 'translate-x-2' : ''}" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                    >
-                        <path 
-                            fill-rule="evenodd" 
-                            d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" 
-                            clip-rule="evenodd" 
-                        />
-                    </svg>
-                </div>
+                Restart Menu
             </button>
+            
+            <div class="flex items-center">
+                <span class="mr-2 font-bold">Total:</span>
+                <span class="text-xl font-bold" id="summary-total">$ {getTotal(cartItems)}</span>
+            </div>
         </div>
     </div>
-  </div>
-  
-  <!-- Customization Modal for editing -->
-  {#if showCustomizationModal && editingItem}
-    {@html CustomizationModal({
-        item: editingItem,
-        isOpen: showCustomizationModal,
-        onClose: 'closeModal',
-        onAddToCart: 'handleSaveCustomization'
-    })}
-  {/if}
+{/if}
+
+<!-- Fixed Payment Bar at Bottom -->
+<div class="bg-base-300 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.2)] p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <div class="flex-1">
+            <div class="flex items-center">
+                <span class="mr-2 font-bold">Items:</span>
+                <span class="badge badge-primary badge-lg" id="cart-item-count">{getItemCount(cartItems)}</span>
+                <span class="mx-4 font-bold">Total:</span>
+                <span class="text-xl font-bold" id="cart-total-price">$ {getTotal(cartItems)}</span>
+            </div>
+        </div>
+        
+        <!-- Center Arrow Button -->
+        <div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+            <button 
+                class="bg-white rounded-full p-3 shadow-md z-30"
+                onclick={toggleOrderSummary}
+                aria-label="Toggle order summary"
+            >
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    class="h-6 w-6 transform transition-transform {isOrderSummaryOpen ? 'rotate-180' : ''}" 
+                    viewBox="0 0 20 20" 
+                    fill="currentColor"
+                >
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        
+        <button 
+            class="relative overflow-hidden group px-8 py-4 h-auto min-h-16 border-4 border-green-800 rounded-full {cartItems.length === 0 ? 'opacity-70 cursor-not-allowed' : 'bg-green-800 text-white hover:bg-green-600'}" 
+            onclick={goToCheckout}
+            disabled={cartItems.length === 0}
+        >
+            <!-- Animated border glow effect -->
+            <span class="absolute inset-0 border-4 border-white/20 rounded-full opacity-0 group-hover:opacity-100 scale-105 transition-all duration-300"></span>
+            
+            <!-- Hover shine effect -->
+            <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-all duration-1000"></span>
+            
+            <!-- Button content with increased spacing -->
+            <div class="relative z-10 flex items-center justify-center font-bold tracking-wide text-lg">
+                <span>Proceed to Checkout</span>
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    class="h-6 w-6 ml-3 transition-transform duration-1000 ease-in-out {isArrowAnimating ? 'translate-x-2' : ''}" 
+                    viewBox="0 0 20 20" 
+                    fill="currentColor"
+                >
+                    <path 
+                        fill-rule="evenodd" 
+                        d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" 
+                        clip-rule="evenodd" 
+                    />
+                </svg>
+            </div>
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- Customization Modal for editing -->
+{#if showCustomizationModal && editingItem}
+{@html CustomizationModal({
+    item: editingItem,
+    isOpen: showCustomizationModal,
+    onClose: 'closeModal',
+    onAddToCart: 'handleSaveCustomization'
+})}
+{/if}
+
+<!-- Toast Notification -->
+{#if toastVisible}
+<ToastNotification 
+    message={toastMessage} 
+    type="success"
+/>
+{/if}
 </div>
